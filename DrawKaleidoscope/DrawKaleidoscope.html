@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Рисовальный калейдоскоп</title>                
+	<script>
+	var p1 = [130, 160], p1R = 8; // Точка на загогулине
+	var p2 = [544, 70], p2R = 8; // Точка на правой планке
+	var p3 = [435, 0], p3R = 8; // Подвижная точка на планке
+	var p4 = [0, 0], p4R = 8; // Точка крепления карандаша
+	var p4Length = 100, p4Delta = 25;
+	var p1MoveMode = false;
+	var p2MoveMode = false;
+	var p3MoveMode = false;
+	var p4MoveMode = false;
+	var mDownX, mDownY, oldX, oldY;
+	var o1 = [118, 142], o1R = 65; // Окружность с ручкой на загогулине (верхнее закругление)
+	var o2 = [242, 235], o2R = 19; // Окружность нижнего закругления на загогулине
+	var o3 = [435, 142]; // Окружность справа
+	var o4 = [217, 221]; // Координаты шпильки на прорези
+//  Углы загогулины
+	var tr1X = 176, tr1Y = 116, tr2X = 255, tr2Y = 220, tr3X = 232, tr3Y = 253, tr4X = 110, tr4Y = 207;
+// Правая планка
+	var pl1Y = 50, pl2Y = 232;
+	var isDataChanged = true;
+
+// 	Переменные для рисования кривой
+	var	t = 0,	pX = 0, pY = 0, step = 0.1;
+	var rD1 = 100, rD3 = 90, lD1, lD3, pH, p1s, p2s;
+		
+	function subVect(x, y){
+		return [x[0] - y[0], x[1] - y [1]];
+	}		
+	
+	function scalarMultVect(a, x){
+		return [a*x[0], a*x[1]];
+	}
+	
+	function addVect(x, y){
+		return [x[0] + y[0], x[1] + y[1]];
+	}
+	
+	function rotate(alpha, x){
+		return [Math.cos(alpha)*x[0] - Math.sin(alpha)*x[1], Math.sin(alpha)*x[0] + Math.cos(alpha)*x[1]];
+	}	
+	
+	function rotateAtPoint(alpha, o, x){
+		return addVect(rotate(alpha, subVect(x, o)), o);
+	}	
+	
+	function dotProduct(x, y){
+		return x[0]*y[0] + x[1]*y[1];
+	}
+	
+	function norm(x){
+		return Math.sqrt(dotProduct(x, x));
+	}
+	
+	function det(a, b){
+		return a[0]*b[1] - a[1]*b[0];
+	}
+
+	function initParams(){
+		pH = [o1[0] - 22*norm(subVect(o1, o3))/175, o1[1]];
+		var eh1 = scalarMultVect(1/norm(subVect(o4, pH)), subVect(o4, pH)); // Единичные векторы в ДСК, привязанной к загогулине
+		var eh2 = [-eh1[1], eh1[0]];
+		var o1p1 = subVect(p1, pH);
+		p1_Z = [dotProduct(o1p1, eh1), dotProduct(o1p1, eh2)]; // Левая точка планки в ДСК, привязанной к загогулине
+		
+		lD1 = norm(subVect(p1, p3));
+		lD3 = norm(subVect(p3, p4));
+		if (det(subVect(p1, p3), subVect(p4, p3)) > 0)
+			lD3 = -lD3;
+		p1s = p1.slice(0);
+		p2s = p2.slice(0);
+		if (rbDisc1.checked)
+		{
+			rD1 = 65.5; rD3 = 88;
+		}
+		if (rbDisc2.checked)
+		{
+			rD1 = 67.5; rD3 = 85;
+		}
+		if (rbDisc3.checked)
+		{
+			rD1 = 71; rD3 = 81;
+		}
+		
+		
+		return true;
+	}
+
+	var d1 = 20;
+	var d2 = 12	
+
+	function fd(x) {
+		return d2*Math.sin(2*Math.PI*x/190);
+	}
+	
+	function magicFunction(x) {
+		return -Math.atan((fd(x - d1) + d2)/x);
+	}
+	
+	function getNextPoint() {
+		var alpha2 = -t*rD3/rD1;
+		var pHT = rotateAtPoint(alpha2, o1, pH);
+		var o4T = rotateAtPoint(magicFunction(norm(pHT, o4)), pHT, o4);
+		var eh1 = scalarMultVect(1/norm(subVect(o4T, pHT)), subVect(o4T, pHT)); // Единичные векторы в ДСК, привязанной к загогулине
+		var eh2 = [-eh1[1], eh1[0]];
+				
+		var pD1 = addVect(addVect(scalarMultVect(p1_Z[0], eh1), scalarMultVect(p1_Z[1], eh2)), pHT);
+		var vv = scalarMultVect(lD1/norm(subVect(p2s, p1s)), subVect(p2s, p1s));
+		var vv1 = scalarMultVect(lD3/norm(vv), [-vv[1], vv[0]]);
+//		var pp = addVect(v1, addVect(pD1, v));
+		var pp = rotateAtPoint(t, o3, addVect(vv1, addVect(pD1, vv)));
+		pX = 2*(pp[0] - o3[0]);
+		pY = 2*(pp[1] - o3[1]);
+	}
+	
+	function drawNextLine() {
+//		var ctx = canvas1.getContext('2d');
+		var ctx = canvas.getContext('2d');
+		var dx = canvas.width / 2;
+		var dy = canvas.height / 2;
+		
+		getNextPoint();
+
+		ctx.lineWidth = 0.5;
+		ctx.strokeStyle = cmbColor.value;
+				
+		ctx.beginPath();		
+		ctx.moveTo(pX + dx, pY + dy);
+//ctx.moveTo(pX, pY);
+		t += step;		
+		getNextPoint();
+		ctx.lineTo(pX + dx, pY + dy);
+//ctx.lineTo(pX, pY);
+		ctx.closePath();
+		ctx.stroke();		
+	}
+			
+	function loader() {	
+		drawScheme();
+	}
+
+	var
+		timer_id = 0;
+		
+	function onGoClick(){
+		if (timer_id == 0)
+		{
+			if (isDataChanged)
+			{
+				if (!initParams())
+					return;
+				isDataChanged = false;
+			}
+			timer_id = setInterval(drawNextLine, 10);
+			btnGo.value = "Пауза";
+			btnClear.disabled = true;
+		}
+		else
+		{
+			clearInterval(timer_id);
+			timer_id = 0;
+			btnGo.value = "Старт";
+			btnClear.disabled = false;		
+		}
+	}
+	
+	function onClearClick(){
+		var ctx = canvas.getContext('2d');
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+		t = 0;
+	}
+	
+	function drawCircle(x, y, r, c, ctx){
+		ctx.beginPath();
+		ctx.fillStyle = "black";
+		ctx.arc(x, y, r, 0, Math.PI*2, false);
+		ctx.fill();
+		ctx.closePath();
+		ctx.beginPath();
+		ctx.fillStyle = c;
+		ctx.arc(x, y, r - 1, 0, Math.PI*2, false);
+		ctx.fill();
+		ctx.closePath();
+	}
+	
+	
+	function getP3Y(x){
+		return Math.floor(p1[1] - (p1[0] - x)*(p1[1] - p2[1])/(p1[0] - p2[0])); 
+	}
+	
+	function getP4X(y){
+		return Math.floor(p3[0] - (p3[1] - y)*(p1[1] - p2[1])/(-(p1[0] - p2[0])));
+	}
+	
+	function drawScheme(){	    	
+		var ctx = canvas1.getContext('2d');		
+		ctx.drawImage(img1,0,0);
+
+		drawCircle(o1[0], o1[1], 4, "red", ctx);
+		drawCircle(o3[0], o3[1], 4, "red", ctx);
+		
+		p3[1] = getP3Y(p3[0]);
+		
+		ctx.lineWidth = 4;
+		ctx.strokeStyle = "red";
+		ctx.beginPath();
+		ctx.moveTo(p1[0], p1[1]);
+		ctx.lineTo(p2[0], p2[1]);
+
+		var L = norm(subVect(p1, p2));
+		var v1 = [(p1[1] - p2[1])/L, -(p1[0] - p2[0])/L];
+		p4 = addVect(p3, scalarMultVect(p4Delta, v1));
+
+		ctx.moveTo(p3[0], p3[1]);
+		ctx.lineTo(Math.floor(p3[0] + p4Length*v1[0]/2), Math.floor(p3[1] + p4Length*v1[1]/2));
+		ctx.moveTo(p3[0], p3[1]);
+		ctx.lineTo(Math.floor(p3[0] - p4Length*v1[0]/2), Math.floor(p3[1] - p4Length*v1[1]/2));
+
+		ctx.stroke();
+		ctx.closePath();
+
+		if (p1MoveMode)
+			drawCircle(p1[0], p1[1], p1R, "brown", ctx);			
+		else
+			drawCircle(p1[0], p1[1], p1R, "yellow", ctx);		
+			
+		if (p2MoveMode)
+			drawCircle(p2[0], p2[1], p2R, "brown", ctx);			
+		else
+			drawCircle(p2[0], p2[1], p2R, "yellow", ctx);
+			
+		if (p3MoveMode)
+			drawCircle(p3[0], p3[1], p3R, "brown", ctx);
+		else
+			drawCircle(p3[0], p3[1], p3R, "yellow", ctx);
+			
+		if (p4MoveMode)
+			drawCircle(p4[0], p4[1], p4R, "brown", ctx);
+		else
+			drawCircle(p4[0], p4[1], p4R, "yellow", ctx);
+//!!!
+/*		
+	pH = [o1[0] - 22*norm(subVect(o1, o3))/175, o1[1]];
+		pSC = [o1[0] - 11*norm(subVect(o1, o3))/175, o1[1]];
+		var eh1 = scalarMultVect(1/norm(subVect(o2, pH)), subVect(o2, pH)); // Единичные векторы в ДСК, привязанной к загогулине
+		var eh2 = [-eh1[1], eh1[0]];
+		drawCircle(pH[0], pH[1], 2, "red", ctx);
+		drawCircle(pSC[0], pSC[1], 2, "red", ctx);
+		
+		vv = scalarMultVect(1/norm(subVect(o2, pH)), subVect(o2, pH));
+		for(i = 0; i <= 140; i++)
+		{
+			pHT = addVect(scalarMultVect(20 + i, vv), pH);			
+			oD2T = rotateAtPoint(magicFunction(20 + i), pH, pHT);
+			drawCircle(oD2T[0], oD2T[1], 2, "red", ctx);
+			}
+		ctx.beginPath();
+		ctx.moveTo(pH[0], pH[1]);
+		ctx.lineTo(o2[0], o2[1]);	
+		ctx.stroke();
+		ctx.closePath();
+		drawCircle(oD2T[0], oD2T[1], 4, "red", ctx);*/
+	}
+		
+	function onCanvasMousedown(e){
+		var br=canvas1.getBoundingClientRect();
+		var mX = Math.floor(e.clientX - br.left);
+		var mY = Math.floor(e.clientY - br.top);
+		mDownX = mX;
+		mDownY = mY;
+
+		if (norm([mX - p1[0], mY - p1[1]]) <= p1R)
+		{
+			oldX = p1[0];
+			oldY = p1[1];		
+			isDataChanged = p1MoveMode = true;
+			drawScheme();
+			return;		
+		}
+	
+		if (norm([mX - p2[0], mY - p2[1]]) <= p2R)
+		{
+			oldX = p2[0];
+			oldY = p2[1];		
+			isDataChanged = p2MoveMode = true;
+			drawScheme();
+			return;
+		}
+		
+		if (norm([mX - p4[0], mY - p4[1]]) <= p4R)
+		{
+			oldX = p4[0];
+			oldY = p4[1];
+			isDataChanged = p4MoveMode = true;
+			drawScheme();
+			return;
+		}		
+
+		if (norm([mX - p3[0], mY - p3[1]]) <= p3R)
+		{
+			oldX = p3[0];
+			oldY = p3[1];
+			isDataChanged = p3MoveMode = true;
+			drawScheme();
+			return;
+		}		
+	}
+
+	function onCanvasMouseup(e){
+		if (p1MoveMode || p2MoveMode || p3MoveMode || p4MoveMode)
+		{
+			p1MoveMode = false;		
+			p2MoveMode = false;
+			p3MoveMode = false;
+			p4MoveMode = false;
+			drawScheme();
+		}
+	}
+
+
+	function onRBClick(e) {
+		isDataChanged = true;
+	}
+	
+	
+	function onCanvasMouseout(e){
+		if (p1MoveMode || p2MoveMode || p3MoveMode || p4MoveMode)
+		{
+			p1MoveMode = false;		
+			p2MoveMode = false;
+			p3MoveMode = false;
+			p4MoveMode = false;
+			drawScheme();
+		}
+	}
+	
+	function onCanvasMousemove(e){
+		if (p1MoveMode)
+		{
+			var br=canvas1.getBoundingClientRect();
+			var mX = Math.floor(e.clientX - br.left);
+			var mY = Math.floor(e.clientY - br.top);
+			var newX = oldX + (mX - mDownX);
+			var newY = oldY + (mY - mDownY);
+			if (norm([newX - o1[0], newY - o1[1]]) <= o1R ||
+				((newX - tr1X)*(tr2Y - tr1Y) - (newY - tr1Y)*(tr2X - tr1X) <= 0) &&
+				((newX - tr2X)*(tr3Y - tr2Y) - (newY - tr2Y)*(tr3X - tr2X) <= 0) && 
+				((newX - tr3X)*(tr4Y - tr3Y) - (newY - tr3Y)*(tr4X - tr3X) <= 0) &&
+				((newX - tr4X)*(tr1Y - tr4Y) - (newY - tr4Y)*(tr1X - tr4X) <= 0) ||
+				norm([newX - o2[0], newY - o2[1]]) <= o2R)
+			{
+				p1 = [newX, newY];
+			}
+			drawScheme();			
+		}	
+		if (p2MoveMode)
+		{
+			var br=canvas1.getBoundingClientRect();
+			var mY = Math.floor(e.clientY - br.top);
+			var newY = oldY + (mY - mDownY);			
+			if (newY <= pl2Y && newY >= pl1Y)
+				p2[1] = newY;
+			drawScheme();			
+		}
+		if (p3MoveMode)
+		{
+			var br=canvas1.getBoundingClientRect();
+			var mX = Math.floor(e.clientX - br.left);
+			var newX = oldX + (mX - mDownX);
+			if (newX < 510 && newX > 360)
+				p3[0] = newX;
+			drawScheme();
+		}
+		if (p4MoveMode)
+		{
+			var br=canvas1.getBoundingClientRect();
+			var mY = Math.floor(e.clientY - br.top);
+			var newY = oldY + (mY - mDownY);
+			var newX = getP4X(newY);
+			var L = norm(subVect(p1, p2));
+			var v1 = [(p1[1] - p2[1])/L, -(p1[0] - p2[0])/L];
+			
+			var newP4Delta = norm([newX - p3[0], newY - p3[1]]);
+			if (newP4Delta <= p4Length/2)
+			{
+				p4Delta = newP4Delta;
+				if (v1[0]*(newX - p3[0]) + v1[1]*(newY - p3[1]) < 0)
+					p4Delta = -p4Delta;
+			}
+			drawScheme();
+		}
+	}
+	
+
+	</script>
+	<style type="text/css">
+		.divcanvas { 
+			border: solid 2px black; 
+			box-shadow: 0 0 15px rgba(0,0,0,0.5); 
+		}
+		.divcanvasRol { 
+			border: solid 2px black; 
+		}
+		.leftimg {
+			float:left; /* Выравнивание по левому краю */
+			margin: 7px 7px 7px 0; /* Отступы вокруг картинки */			
+		}
+	</style> 
+	</head>
+	<body onload="loader()" bgcolor="#E0E0E0">
+		<img id="img1" src="DrawKaledScheme1.png" style="display: none;" />
+		<h1 align="center">Рисовальный калейдоскоп</h1>		
+		<hr />
+		<p>
+			<a href="DrawKaledMain.png"><img src="DrawKaledMain.png" alt="Рисовальный калейдоскоп" class="centerimg" /></a>
+		</p>
+		<p>	
+			Рисовальный калейдоскоп - механическое приспособление для рисования замысловатых узоров, описанное в журнале Техника-молодёжи №7 за 1965 год в статье 
+			<a href="http://zhurnalko.net/=nauka-i-tehnika/tehnika-molodezhi/1965-07--num46" target="_blank">Ожившая математика </a>. 
+			Сначала необходимо задать начальное расположение планки с карандашом и установить ремень на выбранные диски. Далее вращение ручки 
+			на левой детали приводит к тому, что на листе бумаги, укрепленном на правом диске, появляется удивительный рисунок.
+		</p>
+		<p>
+			Чтобы посмотреть, что может нарисовать такой аппарат, достаточно вооружиться пилой, дрелью, шурупами, энтузиазмом 
+			и собрать ее по приведенному чертежу. Если же одного из указанных компонентов в наличии нет, 
+			то можно просто воспользоваться приведенной ниже моделью.
+		</p>
+		<p>
+			Начальное положение планки и карандаша необходимо выбрать на схеме, перетаскивая мышкой детали, отмеченные желтыми кругами. Выбираем положение ремня на дисках, цвет карандаша 
+			(выбор цвета, увы, не работает в IE) и нажимаем кнопку Старт. После нажатия Пауза, можно изменить положение ремня, планки, выбрать другой цвет и продолжить 
+			процесс рисования.
+		</p>		
+		<hr />
+		<table>
+			<tr>
+				<td align="center">				  
+					<input id="btnGo" value="Старт" type="button" onclick="onGoClick()">
+					<input id="btnClear" value="Очистить" type="button" onclick="onClearClick()">
+				</td>
+				<td>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<canvas id="canvas" class="divcanvas" width="500"height="500"> </canvas>
+				</td>			
+				<td valign="top">					
+					<p>Положение ремня на дисках</p>
+					<p><input id = "rbDisc1" type="radio" name="rbDisc" checked = true onclick="onRBClick(event)">65,5/88</p>
+					<p><input id = "rbDisc2" type="radio" name="rbDisc" onclick="onRBClick(event)">67,5/85</p>
+					<p><input id = "rbDisc3" type="radio" name="rbDisc" onclick="onRBClick(event)">71/81</p>
+					Положение планки в начальный момент
+					<br />
+					<br />
+					<canvas id="canvas1" class="divcanvas" width="600"height="275" onmousedown="onCanvasMousedown(event)" onmouseup="onCanvasMouseup(event)" onmousemove="onCanvasMousemove(event)" onmouseout="onCanvasMouseout(event)"> </canvas>
+					<br />					
+					Цвет карандаша: <input id="cmbColor" type="color" name="bg" value="#ff0000">
+				</td>
+			</tr>
+		</table>
+		<p>
+			Если Вы наигрались Рисовальным калейдоскопом, то можно перейти к двум другим описанным в статье устройствам:
+			</br>
+			<a href= "../desgraph/desgraph.html"> Дезайнограф </a>
+			</br>
+			<a href= "../harmonograph/harmonograph.html"> Гармонограф </a>
+		</p>
+	</body>
+</html>

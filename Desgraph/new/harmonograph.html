@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Гармонограф</title>                
+	<script>
+		
+
+	var
+		t = 0,	
+		pX = 0,
+		pY = 0,
+		amp1 = 150,
+		amp2 = 150,
+		step = 0.05;
+		freq = 0;
+					
+	function getNextPoint() {
+
+//		pX = Math.cos(t)*amp1*Math.exp(-0.005*t);
+//		pY = Math.cos(t*3/5)*amp2*Math.exp(-0.005*t);
+
+	
+//		pX = amp1*Math.sin(0.5*Math.sin(t)*Math.exp(-0.01*t));
+//		pY = amp2*Math.sin(0.5*Math.sin(t*(Math.PI/3.2))*Math.exp(-0.01*t));
+
+	
+		pX = Math.sin(t)*amp1*Math.exp(-0.005*t);
+		pY = Math.sin(t*freq)*amp2*Math.exp(-0.005*t);
+//		amp1 = 150,
+//		amp2 = 150,
+	
+	
+	
+//		pX = Math.sin(t)*amp1*Math.exp(-0.01*t);
+//		pY = Math.sin(t*(Math.PI/3.1))*amp2*Math.exp(-0.01*t);
+//		amp1 = 150,
+//		amp2 = 150,
+
+	
+//		pX = Math.sin(t)*amp1*Math.exp(-0.001*t);
+//		pY = Math.sin(t*(Math.PI/3.2))*amp2*Math.exp(-0.003*t);
+//		amp1 = 150,
+//		amp2 = 180,
+
+	}
+	
+	function drawNextLine() {
+		var canvas = document.getElementById("canvas");
+		var ctx = canvas.getContext('2d');
+		var dx = canvas.width / 2;
+		var dy = canvas.height / 2;
+		
+		getNextPoint();
+
+		ctx.lineWidth = 0.5;
+		ctx.strokeStyle = "black";		
+				
+		ctx.beginPath();		
+		ctx.moveTo(pX + dx, pY + dy);
+		t += step;		
+		getNextPoint();
+		ctx.lineTo(pX + dx, pY + dy);
+		ctx.closePath();
+		ctx.stroke();		
+		
+	}
+	 			
+	function loader() {
+		edtFreq.value = 1.047;
+		edtAmp1.value = 150;
+		edtAmp2.value = 150;
+		drawScheme();
+		initParams();
+	}
+
+	var
+		timeout_id = 0;
+		
+	function onStopClick(){
+		if (timeout_id != 0)
+		{
+			clearInterval(timeout_id);
+			timeout_id = 0;
+		}
+		t = 0;
+		btnGo.value = "Старт";
+	}
+	
+	function initParams(){	
+		if (isNaN(edtFreq.value))
+		{
+			alert("Некорректно задано отношение частот. Введите число!");
+			return false;
+		}
+		if (isNaN(edtAmp1.value))
+		{
+			alert("Некорректно задана амплитуда 1-го маятника!");
+			return false;
+		}
+		if (isNaN(edtAmp2.value))
+		{
+			alert("Некорректно задана амплитуда 2-го маятника!");			
+			return false;
+		}
+		freq = edtFreq.value;
+		amp1 = edtAmp1.value;
+		amp2 = edtAmp2.value;
+		return true;
+	}
+		
+	function onGoClick(){
+		if (timeout_id == 0)
+		{
+			if (t == 0)
+			{
+				var canvas = document.getElementById("canvas");
+				var ctx = canvas.getContext('2d');
+				ctx.clearRect(0, 0, canvas.width, canvas.height);				
+				if (!initParams())
+					return;
+			}		
+			timeout_id = setInterval(drawNextLine, 1);
+			btnGo.value = "Пауза";
+		}
+		else
+			if (t != 0)
+			{
+				clearInterval(timeout_id);
+				timeout_id = 0;
+				btnGo.value = "Дальше";
+			}		
+	}
+	
+	function onClearClick(){
+		clearInterval(timeout_id);
+		timeout_id = 0;
+		var canvas = document.getElementById("canvas");
+		var ctx = canvas.getContext('2d');
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+		t = 0;
+	}
+	
+	function example1(){
+		onClearClick();
+		edtFreq.value = 1.047;
+		edtAmp1.value = 150;
+		edtAmp1.value = 150;
+		initParams();
+	}
+	
+	function example2(){
+		onClearClick();
+		edtFreq.value = 0.988;
+		edtAmp1.value = 150;
+		edtAmp1.value = 150;
+	}
+
+
+	function example3(){
+		onClearClick();
+		edtFreq.value = 0.8;
+		edtAmp1.value = 150;
+		edtAmp1.value = 150;
+	}
+
+	function example4(){
+		onClearClick();
+		edtFreq.value = 2;
+		edtAmp1.value = 150;
+		edtAmp1.value = 150;
+	}	
+	
+	function example5(){
+		onClearClick();
+		edtFreq.value = 1.988;
+		edtAmp1.value = 150;
+		edtAmp1.value = 150;
+	}		
+	
+	function example6(){
+		onClearClick();
+		edtFreq.value = 2.05;
+		edtAmp1.value = 150;
+		edtAmp1.value = 150;
+	}
+
+	var p1X = 48, p1Y = 300, p1R = 8;
+	var p2X = 320, p2Y = 320, p2R = 5;
+	var posSite1 = 0.5, posSiteR = 8;
+	var p3X = 200, p3Y = 0, p3R = 8;
+	var p4X = 220, p4Y = 150, p4R = 8;
+	var p2MoveMode = false;
+	var p3MoveMode = false;
+	var p4MoveMode = false;
+	var mDownX, mDownY, oldX, oldY;
+	var o1X = 320, o1Y = 281, o1R = 39;
+	var o2X = 188, o2Y = 123, o2R = 114;
+
+	function drawCircle(x, y, r, c, ctx){
+		ctx.beginPath();
+		ctx.fillStyle = "black";
+		ctx.arc(x, y, r, 0, Math.PI*2, false);
+		ctx.fill();
+		ctx.closePath();
+		ctx.beginPath();
+		ctx.fillStyle = c;
+		ctx.arc(x, y, r - 1, 0, Math.PI*2, false);
+		ctx.fill();
+		ctx.closePath();
+	}
+	
+	
+	function getP3Y(x){
+		return Math.floor(p1Y - (p1X - x)*(p1Y - p2Y)/(p1X - p2X)); 
+	}
+	
+	function drawScheme(){
+		var canvas = document.getElementById("canvas");
+		var ctx = canvas.getContext('2d');		
+		ctx.drawImage(img1,0,0);
+		
+		p3Y = getP3Y(p3X);
+		
+		ctx.lineWidth = 4;
+		ctx.strokeStyle = "red";
+		ctx.beginPath();
+		ctx.moveTo(p1X, p1Y);
+		ctx.lineTo(p2X, p2Y);
+		ctx.moveTo(p3X, p3Y);
+		ctx.lineTo(p4X, p4Y);		
+		ctx.stroke();
+		ctx.closePath();
+
+		drawCircle(p1X, p1Y, p1R, "red", ctx);
+		if (p2MoveMode)
+			drawCircle(p2X, p2Y, p2R, "brown", ctx);			
+		else
+			drawCircle(p2X, p2Y, p2R, "yellow", ctx);
+		if (p3MoveMode)
+			drawCircle(p3X, p3Y, p3R, "brown", ctx);
+		else
+			drawCircle(p3X, p3Y, p3R, "yellow", ctx);
+		if (p4MoveMode)
+			drawCircle(p4X, p4Y, p4R, "brown", ctx);
+		else
+			drawCircle(p4X, p4Y, p4R, "yellow", ctx);
+		
+		
+	}
+		
+	function onCanvasMousedown(e){
+		var br=canvas.getBoundingClientRect();
+		var mX = Math.floor(e.pageX - br.left);
+		var mY = Math.floor(e.pageY - br.top);
+		mDownX = mX;
+		mDownY = mY;
+
+		if ((mX - p2X)*(mX - p2X) + (mY - p2Y)*(mY - p2Y) <= p2R*p2R)
+		{
+			oldX = p2X;
+			oldY = p2Y;		
+			p2MoveMode = true;
+			drawScheme();
+			return;
+		}
+
+		if ((mX - p3X)*(mX - p3X) + (mY - p3Y)*(mY - p3Y) <= p3R*p3R)
+		{
+			oldX = p3X;
+			oldY = p3Y;
+			p3MoveMode = true;
+			drawScheme();
+			return;
+		}
+
+		if ((mX - p4X)*(mX - p4X) + (mY - p4Y)*(mY - p4Y) <= p4R*p4R)
+		{
+			oldX = p4X;
+			oldY = p4Y;
+			p4MoveMode = true;
+			drawScheme();
+			return;
+		}		
+		
+	}
+
+	function onCanvasMouseup(e){
+		if (p2MoveMode || p3MoveMode || p4MoveMode)
+		{
+			p2MoveMode = false;
+			p3MoveMode = false;
+			p4MoveMode = false;
+			drawScheme();
+		}
+	}
+
+
+	function onCanvasMouseout(e){
+		if (p2MoveMode || p3MoveMode || p4MoveMode)
+		{
+			p2MoveMode = false;
+			p3MoveMode = false;
+			p4MoveMode = false;
+			drawScheme();
+		}
+	}
+	
+	function onCanvasMousemove(e){
+		if (p2MoveMode)
+		{
+			var br=canvas.getBoundingClientRect();
+			var mY = Math.floor(e.pageY - br.top);
+			var newY = oldY + (mY - mDownY);
+			if (newY < o1Y)
+				p2Y = o1Y;
+			else
+			if (newY > o1Y + o1R)
+				p2Y = o1Y + o1R;
+			else
+				p2Y = newY;
+			drawScheme();
+		}
+		if (p3MoveMode)
+		{
+			var br=canvas.getBoundingClientRect();
+			var mX = Math.floor(e.pageX - br.left);
+			var newX = oldX + (mX - mDownX);
+			if (newX < p1X)
+				p3X = p1X;
+			else
+			if (newX > p2X - p2R - p3R - 1)
+				p3X = p2X - p2R - p3R - 1;
+			else
+				p3X = newX;
+			
+			drawScheme();
+		}
+		if (p4MoveMode)
+		{
+			var br=canvas.getBoundingClientRect();
+			var mX = Math.floor(e.pageX - br.left);
+			var mY = Math.floor(e.pageY - br.top);
+			var newX = oldX + (mX - mDownX);
+			var newY = oldY + (mY - mDownY);
+			if ((newX - o2X)*(newX - o2X) + (newY - o2Y)*(newY - o2Y) <= o2R*o2R)
+			{
+				p4X = newX;
+				p4Y = newY;
+			}
+			drawScheme();
+		}
+	}	
+	
+
+	</script>
+	<style type="text/css">
+		.divcanvas { 
+			border: solid 2px black; 
+			box-shadow: 0 0 15px rgba(0,0,0,0.5); 
+		}
+		.leftimg {
+			float:left; /* Выравнивание по левому краю */
+			margin: 7px 7px 7px 0; /* Отступы вокруг картинки */			
+		}
+	</style> 
+	</head>
+	<body onload="loader()" bgcolor="#E0E0E0">
+		<img id="img1" src="DesScheme_1.png" style="display: none;" />
+		<h1 align="center">Гармонограф</h1>
+		<hr />
+		<table>		
+			<tr>
+				<td>
+					<a href="harm.png"><img src="harml.png" alt="Гармонограф" class="leftimg" /></a>
+				</td>
+				<td>
+					<p>		
+						Гармонограф представляет собой механическую машину для рисования, в которой рисунок строится колеблющимися в перпендикулярных
+						плоскостях маятниками, к которым прикреплена ручка или карандаш (здесь возможны различные вариации, когда один из маятников качает ручку, 
+						а другой - поверхность, на которой строится рисунок; есть также реализации с тремя маятниками, в которых ручка качается в двух плоскостях,
+						а третий маятник качает планшет с листом бумаги). Получающийся рисунок зависит от соотношения частот, амплитуды и скорости затухания 
+						колебаний маятников.		
+					</p>
+					<p>
+						Возможная контрукция гармонографа приведена на рисунке (обложка журнала Техника молодежи №7 1965 год).
+					</p>
+					<p>
+						Чтобы посмотреть, что может нарисовать такой аппарат, достаточно вооружиться пилой, дрелью, шурупами, энтузиазмом 
+						и собрать ее по приведенному чертежу. Если одного из указанных компонентов в наличии нет (лично у меня определнно возникли бы сложности 
+						с последним компонентом), то 
+						можно найти ролик с действующим прибором на ютубе, либо воспользоваться приведенной ниже моделью 
+						(Стоит отметить, что модель хорошо работает для малых колебаний маятников. При большой амплитуде колебаний реальный рисунок 
+						в общих чертах похож на то, что получается на этой страничке, но будет несколько "покривее").
+					</p>										
+					
+				</td>
+			</tr>
+		</table>
+		<hr />
+		<table>
+			<tr>
+				<td align="center">				  
+					<input id="btnGo" value="Старт" type="button" onclick="onGoClick()">
+					<input id="btnStop" value="Стоп" type="button" onclick="onStopClick()">
+					<input id="btnStop" value="Очистить" type="button" onclick="onClearClick()">
+				</td>
+				<td>
+				</td>
+			<tr>
+				<td>
+					<canvas id="canvas" class="divcanvas" width="400"height="345" onmousedown="onCanvasMousedown(event)" onmouseup="onCanvasMouseup(event)" onmousemove="onCanvasMousemove(event)" onmouseout="onCanvasMouseout(event)"> </canvas>
+				</td>
+				<td valign="top">	
+					Отношение частот (1-1000): <input id="edtFreq" type="number" min="0" max="5" size="6">
+					<br />
+					Амплитуда 1-го маятника (0-200): <input id="edtAmp1" type="number" >
+					<br />
+					Амплитуда 2-го маятника (0-200): <input id="edtAmp2" type="number" >
+					<br />
+					<hr />
+					Примеры:
+					<table>
+						<tr>
+							<td>
+								<img src="hrm1l.png" alt="Пример1" />
+							</td>						
+							<td>
+								<input id="btnEx1" value="Выбрать" type="button" onclick="example1()">
+							</td>			
+							<td>
+								<img src="hrm4l.png" alt="Пример4" />
+							</td>						
+							<td>
+								<input id="btnEx4" value="Выбрать" type="button" onclick="example4()">
+							</td>										
+						</tr>
+						<tr>
+							<td>
+								<img src="hrm2l.png" alt="Пример2" />
+							</td>						
+							<td>
+								<input id="btnEx2" value="Выбрать" type="button" onclick="example2()">
+							</td>
+							<td>
+								<img src="hrm5l.png" alt="Пример5" />
+							</td>						
+							<td>
+								<input id="btnEx5" value="Выбрать" type="button" onclick="example5()">
+							</td>							
+						</tr>
+						<tr>						
+							<td>
+								<img src="hrm3l.png" alt="Пример3" />
+							</td>						
+							<td>
+								<input id="btnEx3" value="Выбрать" type="button" onclick="example3()">
+							</td>
+							<td>
+								<img src="hrm6l.png" alt="Пример6" />
+							</td>						
+							<td>
+								<input id="btnEx6" value="Выбрать" type="button" onclick="example6()">
+							</td>																							
+						</tr>
+					</table>								
+				</td>
+			</tr>
+		</table>		
+	</body>
+</html>

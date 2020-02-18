@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Мадагаскарские шашки</title>                
+	<script>
+		
+
+	var
+		y1 = 1,
+		y2 = 0,
+		dis = 0,
+		t = 0,	
+		pX = 0,
+		pY = 0,
+		amp1 = 150,
+		amp2 = 150,
+		step = 0.1;
+			
+	function getNextPoint() {
+
+		pX = Math.cos(t)*amp1*Math.exp(-0.005*t);
+		pY = Math.cos(t*1/5)*amp2*Math.exp(-0.005*t);
+
+	
+//		pX = Math.sin(t)*amp1*Math.exp(-0.01*t);
+//		pY = Math.sin(t*(Math.PI/3.2))*amp2*Math.exp(-0.01*t);
+
+	
+//		pX = Math.sin(t)*amp1*Math.exp(-0.01*t);
+//		pY = Math.sin(t*(Math.PI/3))*amp2*Math.exp(-0.01*t);
+//		amp1 = 150,
+//		amp2 = 150,
+	
+	
+	
+//		pX = Math.sin(t)*amp1*Math.exp(-0.01*t);
+//		pY = Math.sin(t*(Math.PI/3.1))*amp2*Math.exp(-0.01*t);
+//		amp1 = 150,
+//		amp2 = 150,
+
+	
+//		pX = Math.sin(t)*amp1*Math.exp(-0.001*t);
+//		pY = Math.sin(t*(Math.PI/3.2))*amp2*Math.exp(-0.003*t);
+//		amp1 = 150,
+//		amp2 = 180,
+
+	}
+	
+	function drawNextLine() {
+		var canvas = document.getElementById("canvas");
+		var ctx = canvas.getContext('2d');
+		var dx = canvas.width / 2;
+		var dy = canvas.height / 2;
+		
+		getNextPoint();
+
+		ctx.lineWidth = 1;
+		ctx.strokeStyle = "black";		
+				
+		ctx.beginPath();		
+		ctx.moveTo(pX + dx, pY + dy);
+		t += step;		
+		getNextPoint();
+		ctx.lineTo(pX + dx, pY + dy);
+		ctx.closePath();
+		ctx.stroke();		
+		
+	}
+	 
+			
+	function loader() {
+	}
+
+	var
+		timeout_id = 0;
+		
+	function onStopClick(){
+		clearInterval(timeout_id);
+		timeout_id = 0;
+	}
+		
+	function onGoClick(){
+		if (timeout_id == 0)
+			timeout_id = setInterval(drawNextLine, 5);
+	}
+
+	</script>
+	<style type="text/css">
+		.divcanvas { 
+			border: solid 2px black; 
+			box-shadow: 0 0 15px rgba(0,0,0,0.5); 
+		}
+	</style> 
+	</head>
+	<body onload="loader()" bgcolor="#E0E0E0">
+		<h1 align="center">Головоломка мадагаскарские шашки</h1>
+		<hr />
+		<div align="center">
+		<p>
+		<input id="btnGo" value="Go" type="button" onclick="onGoClick()">
+		<input id="btnStop" value="Stop" type="button" onclick="onStopClick()">
+		</p>
+		<p>
+		<canvas id="canvas" class="divcanvas" width="500"height="500" onclick="onClickCanvas(event)"> </canvas>
+		</p>
+	</body>
+</html>

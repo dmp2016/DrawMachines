@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>ћадагаскарские шашки</title>                
+	<script>
+		var startField = [
+            [-1, -1, 1, 1, 1, -1, -1],
+            [-1, -1, 1, 1, 1, -1, -1],
+            [1,  1, 1, 1, 1,  1,  1],
+            [1,  1, 1, 0, 1,  1,  1],
+            [1,  1, 1, 1, 1,  1,  1],
+            [-1, -1, 1, 1, 1, -1, -1],
+            [-1, -1, 1, 1, 1, -1, -1 ],
+        ];
+		var gameField = new Array(8, 8);
+		var startX = 40, startY = 40;
+		var eWidth = 20, eHeight = 20;
+		var eFullWidth = (eWidth + eWidth / 2);
+		var eFullHeight = (eHeight + eHeight / 2);
+		var currentItemRow = -1;
+		var currentItemCol = -1;
+		var steps = [];
+		var curStep = -1;
+		
+		function loadStartField()
+		{
+		  for (i = 0; i < 9; i++)
+			for (j = 0; j < 9; j++)
+			  gameField[i, j] = startField[i, j];
+		  curStep = -1;
+		  steps.length = 0;
+		}
+
+		function drawField()
+		{
+		  var canvas = document.getElementById("canvas");
+		  var ctx = canvas.getContext('2d');
+		  ctx.drawImage(img1,0,0);  
+
+		  var dX = (eFullWidth ) / 2;
+		  var dY = (eFullHeight ) / 2;
+
+		  for (i = 0; i < 7; i++)
+			for (j = 0; j < 7; j++)
+			  if (gameField[i][j] >= 0)
+			  {
+				ctx.lineWidth = 2;
+				ctx.strokeStyle = "black";
+				ctx.beginPath();		
+				ctx.arc(Math.round(startX + dX + j * eFullWidth), Math.round(startY + dY + i * eFullHeight), 10, 0, Math.PI*2, false);
+				ctx.closePath();
+				ctx.stroke();
+				
+				if (i == currentItemRow && j == currentItemCol)
+				{
+				  ctx.fillStyle = "rgba(0, 0, 200, 1)";
+				  ctx.beginPath();		
+				  ctx.arc(Math.round(startX + dX + j * eFullWidth), Math.round(startY + dY + i * eFullHeight), 9, 0, Math.PI*2, false);
+				  ctx.closePath();
+				  ctx.fill();		
+				}
+				
+				if (gameField[i][j] == 0)
+				{
+				  ctx.fillStyle = "brown";
+				  ctx.beginPath();		
+				  ctx.arc(Math.round(startX + dX + j * eFullWidth), Math.round(startY + dY + i * eFullHeight), 9, 0, Math.PI*2, false);
+				  ctx.closePath();
+				  ctx.fill();		
+				}
+				
+				if (gameField[i][j] == 1)
+				{
+				  ctx.fillStyle = "white";
+				  ctx.beginPath();		
+				  ctx.arc(Math.round(startX + dX + j * eFullWidth), Math.round(startY + dY + i * eFullHeight), 9, 0, Math.PI*2, false);
+				  ctx.closePath();
+				  ctx.fill();				
+				}
+				if (i == currentItemRow && j == currentItemCol)
+				{
+				  ctx.lineWidth = 2;
+				  ctx.strokeStyle = "yellow";
+				  ctx.beginPath();		
+				  ctx.arc(Math.round(startX + dX + j * eFullWidth), Math.round(startY + dY + i * eFullHeight), 14, 0, Math.PI*2, false);
+				  ctx.closePath();
+				  ctx.stroke();
+				}
+			  }
+		}
+
+		function loader() {
+		  currentItemRow = -1;
+		  currentItemCol = -1;
+		 
+		  loadStartField();
+		  drawField();  
+		}
+
+		function checkStep(col1, row1, col2, row2) {
+		  if (col1 >= 0 && col1 < 9 && row1 >= 0 && row1 < 9)
+			if (col2 >= 0 && col2 < 9 && row2 >= 0 && row2 < 9)
+			{
+			  if (gameField[row1][col1] == 1 && gameField[row2][col2] == 0 &&
+				  gameField[row1 + Math.floor((row2 - row1) / 2)][col1 + Math.floor((col2 - col1) / 2)] == 1)
+				if ((Math.abs(col1 - col2) == 2 && Math.abs(row1 - row2) == 0) ||
+				  (Math.abs(col1 - col2) == 0 && Math.abs(row1 - row2) == 2))
+				return true;
+			}
+		  return false;
+		}
+
+		function doStepForward(col1, row1, col2, row2) {
+		  gameField[row1][col1] = 0;
+		  gameField[row1 + Math.floor((row2 - row1) / 2)][col1 + Math.floor((col2 - col1) / 2)] = 0;
+		  gameField[row2][col2] = 1;
+		}
+
+		function doStepBack(col1, row1, col2, row2) {
+		  gameField[row1][col1] = 1;
+		  gameField[row1 + Math.floor((row2 - row1) / 2)][col1 + Math.floor((col2 - col1) / 2)] = 1;  
+		  gameField[row2][col2] = 0;
+		}
+
+		function onClickCanvas(e) {
+		  e = e || window.event;
+		  var br=canvas.getBoundingClientRect();
+		  var col = Math.floor(((e.pageX - br.left) - startX) / eFullWidth);
+		  var row = Math.floor(((e.pageY - br.top) - startY) / eFullHeight);
+		  if (col >= 0 && col <= 8 && row >=0 && row <= 8)
+		  {
+			if (gameField[row][col] == 1)
+			{
+			  currentItemRow = row;
+			  currentItemCol = col;    
+			}
+			if (gameField[row][col] == 0)
+			  if (currentItemCol >= 0 && currentItemRow >= 0 && checkStep(currentItemCol, currentItemRow, col, row))
+			  {
+				doStepForward(currentItemCol, currentItemRow, col, row);		
+				curStep++;
+				steps[curStep] = new Object();
+				steps[curStep].col1 = currentItemCol;
+				steps[curStep].row1 = currentItemRow;
+				steps[curStep].col2 = col;
+				steps[curStep].row2 = row;
+				steps.length = curStep + 1;
+				currentItemCol = col;
+				currentItemRow = row;
+				if (curStep == 30)
+				  congr.style.display = "";
+			  }
+		  }
+		  drawField();
+		}
+
+		function goPrev() {
+		  if (curStep >= 0)
+		  {
+			doStepBack(steps[curStep].col1, steps[curStep].row1, steps[curStep].col2, steps[curStep].row2);
+			curStep--;  	
+			currentItemRow = -1;
+			currentItemCol = -1;	
+		  }
+		}
+
+		function goNext() {
+		  if (curStep < steps.length - 1)
+		  {
+			curStep++;
+			doStepForward(steps[curStep].col1, steps[curStep].row1, steps[curStep].col2, steps[curStep].row2);
+			currentItemRow = -1;
+			currentItemCol = -1;	
+		  }            
+		}
+
+		function onFirstClick(){
+		  while (curStep >= 0) 
+			goPrev();
+		  drawField();
+		}
+
+		function onLastClick(){
+		  while (curStep < steps.length - 1) 
+			goNext();
+		  drawField();	
+		}
+
+		function onPrevClick(){
+		  goPrev();
+		  drawField();
+		}
+
+		function onNextClick(){
+		  goNext();
+		  drawField();
+		}
+
+	</script>
+	<style type="text/css">
+		.divcanvas { 
+			border: solid 2px black; 
+			box-shadow: 0 0 15px rgba(0,0,0,0.5); 
+		}
+		.scongr {
+			color: red; 
+			font-size: 200%; 
+			text-shadow: 1px 1px 2px black, 0 0 1em red; /* ѕараметры тени */
+		}
+	</style> 
+	</head>
+	<body onload="loader()" bgcolor="#E0E0E0">
+		<h1 align="center">√оловоломка мадагаскарские шашки</h1>
+		<hr />
+		<div align="center">
+		<p>
+		<input id="btnFirst" value="<<" type="button" onclick="onFirstClick()">
+		<input id="btnPrev" value="<" type="button" onclick="onPrevClick()">
+		<input id="btnNext" value=">" type="button" onclick="onNextClick()">
+		<input id="btnLast" value=">>" type="button" onclick="onLastClick()">
+		</p>
+		<p>
+		<canvas id="canvas" class="divcanvas" width="290"height="290" onclick="onClickCanvas(event)"> </canvas>
+		</p>
+		<p>
+		<b>
+		<div id="congr" align="center" class="scongr" style="display: none;">
+		ѕоздравл€ем!!! ¬ы победитель!!!
+		</div>				
+		</p>
+		</div>		
+		<hr />
+		ѕравила головоломки просты. ¬ углублени€х игровой доски расположены 32 шарика, центральное углубление оставлено пустым. 
+		–азрешаетс€ перемещать выбранный шарик на свободное место, "перепрыгива€" через другой шарик. 
+		ѕри этом шарик, через который "перепрыгнули", убираетс€ с доски. ’оды можно делать только по вертикали и по
+		горизонтали. “ребуетс€ оставить на доске как можно меньше шариков. ¬ идеале должен остатьс€ ровно один шарик (такое решение существует).
+		–ешение, при котором оставшийс€ единственный шарик оказываетс€ в центре доски, считаетс€ наиболее удачным и красивым.
+		</p>		
+		<p>
+		≈сли поиск решени€ вышел за рамки ¬ашего терпени€, а узнать его тем не менее очень хочетс€, то сделать это можно нажав <a href="madagsol.html" target="_blank"> сюда</a>.		
+		</p>		
+		</b>
+		<img id="img1" src="Fon.jpg" style="display: none;" />
+	</body>
+</html>

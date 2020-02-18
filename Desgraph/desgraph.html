@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Дезайнограф</title>                
+	<script>
+
+	var
+		t = 0,	
+		pX = 0,
+		pY = 0,
+		l3 = 150,
+		l2 = 200,
+		step = 0.05,
+		O2s = [12, 0], //Центр большой окружности в начальный момент
+		O1 = [120, -125], //Центр малой окружности
+		l2 = 200,
+		l3 = 150,
+		e1 = [1, 0],
+		alpha1 = Math.PI/3,
+		Pm0 = [-95, -140],
+		r = 25,
+		P0,
+		R2 = 90,
+		R1 = 30;
+	var 
+		isDataChanged = true;		
+		
+	function subVect(x, y){
+		return [x[0] - y[0], x[1] - y [1]];
+	}		
+	
+	function scalarMultVect(a, x){
+		return [a*x[0], a*x[1]];
+	}
+	
+	function addVect(x, y){
+		return [x[0] + y[0], x[1] + y[1]];
+	}
+	
+	function rotate(alpha, x){
+		return [Math.cos(alpha)*x[0] - Math.sin(alpha)*x[1], Math.sin(alpha)*x[0] + Math.cos(alpha)*x[1]];
+	}	
+
+	function dotProduct(x, y){
+		return x[0]*y[0] + x[1]*y[1];
+	}
+	
+	function norm(x){
+		return Math.sqrt(dotProduct(x, x));
+	}
+	
+	function getAngle(x, y){
+		return 
+	}
+	
+
+	function alpha(t){
+		var O2 = rotate(-t, O2s);
+		var O2O1 = subVect(O1, O2);
+		var Kas1 = addVect(scalarMultVect(R1/norm(O2O1), rotate(Math.PI/2, O2O1)), O1);
+		return Math.acos(dotProduct(O1, subVect(Kas1, O1))/(norm(O1)*norm(subVect(Kas1, O1))));
+	}
+
+	function beta(t){
+		var O2 = rotate(-t, O2s);
+		var O2O1 = subVect(O1, O2);
+		var Kas2 = addVect(scalarMultVect(R2/norm(O2O1), rotate(Math.PI/2, O2O1)), O2);
+		var P = rotate(t, P0);
+		return Math.acos(dotProduct(subVect(Kas2, O2), subVect(P, O2))/(norm(subVect(Kas2, O2))*norm(subVect(P, O2))));	
+	}
+
+	function d(t){
+		var O2 = rotate(-t, O2s);
+		var O2O1 = subVect(O1, O2);
+		var Kas2 = addVect(scalarMultVect(R2/norm(O2O1), rotate(Math.PI/2, O2O1)), O2);
+		var Kas1 = addVect(scalarMultVect(R1/norm(O2O1), rotate(Math.PI/2, O2O1)), O1);
+		return norm(subVect(Kas1, Kas2));
+	}
+	
+	function gamma(t){
+		var l = d(t) + alpha(t)*R1 + beta(t - Math.PI*Math.floor(t/Math.PI))*R2 + beta(Math.PI)*R2*Math.floor(t/Math.PI);
+		return l/R1;	
+	}
+
+	function pp(t){
+		var Pm1 = addVect(scalarMultVect(r, rotate(-t, e1)), O1);
+		var Pm1Pm0 = subVect(Pm0, Pm1);
+		var Pm3 = addVect(Pm1, scalarMultVect(l2/norm(Pm1Pm0), Pm1Pm0));
+		return addVect(rotate(alpha1, scalarMultVect(-l3/norm(Pm1Pm0), Pm1Pm0)), Pm3);	
+	}
+
+	function getNextPoint() {
+	    var Ppf = rotate(t, pp(-gamma(t)));
+		pX = 3*Ppf[0];
+		pY = 3*Ppf[1];
+	}
+	
+	function drawNextLine() {
+		var canvas = document.getElementById("canvas");
+		var ctx = canvas.getContext('2d');
+		var dx = canvas.width / 2;
+		var dy = canvas.height / 2;
+		
+		getNextPoint();
+
+		ctx.lineWidth = 0.5;
+		ctx.strokeStyle = cmbColor.value;;		
+				
+		ctx.beginPath();		
+		ctx.moveTo(pX + dx, pY + dy);
+		t += step;		
+		getNextPoint();
+		ctx.lineTo(pX + dx, pY + dy);
+		ctx.closePath();
+		ctx.stroke();		
+	}
+			
+	function loader() {	
+		var O2O1 = subVect(O1, O2s);
+		P0 = addVect(scalarMultVect(R2/norm(O2O1), rotate(Math.PI/2, O2O1)), O2s);
+		drawScheme();
+		initParams();
+	}
+
+	var
+		timeout_id = 0;
+		
+	var
+		timer_id = 0;	
+
+	function onGoClick(){
+		if (timer_id == 0)
+		{
+			if (isDataChanged)
+			{
+				if (!initParams())
+					return;
+				isDataChanged = false;
+			}
+			timer_id = setInterval(drawNextLine, 10);
+			btnGo.value = "Пауза";
+			btnClear.disabled = true;
+		}
+		else
+		{
+			clearInterval(timer_id);
+			timer_id = 0;
+			btnGo.value = "Старт";
+			btnClear.disabled = false;		
+		}	
+	}
+	
+	function onClearClick(){
+		var ctx = canvas.getContext('2d');
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+		t = 0;
+	}
+	
+	var p1X = 48, p1Y = 300, p1R = 8;
+	var p2X = 321, p2Y = 320, p2R = 5;
+	var p3X = 200, p3Y = 0, p3R = 8;
+	var p4X = 220, p4Y = 150, p4R = 8;
+	var p2MoveMode = false;
+	var p3MoveMode = false;
+	var p4MoveMode = false;
+	var mDownX, mDownY, oldX, oldY;
+	var o1X = 321, o1Y = 281, o1R = 39;
+	var o2X = 188, o2Y = 123, o2R = 114;
+	
+	function initParams(){
+		var coef = 90/o2R;
+		l2 = norm(subVect([p2X, p2Y], [p3X, p3Y]))*coef;
+		l3 = norm(subVect([p3X, p3Y], [p4X, p4Y]))*coef;
+		alpha1 = Math.acos(dotProduct(subVect([p4X, p4Y], [p3X, p3Y]), subVect([p2X, p2Y], [p3X, p3Y]))/(norm(subVect([p4X, p4Y], [p3X, p3Y]))*norm(subVect([p2X, p2Y], [p3X, p3Y]))));
+		r = norm(subVect([p2X, p2Y], [o1X, o1Y]))*coef;		
+		return true;
+	}
+
+
+	function drawCircle(x, y, r, c, ctx){
+		ctx.beginPath();
+		ctx.fillStyle = "black";
+		ctx.arc(x, y, r, 0, Math.PI*2, false);
+		ctx.fill();
+		ctx.closePath();
+		ctx.beginPath();
+		ctx.fillStyle = c;
+		ctx.arc(x, y, r - 1, 0, Math.PI*2, false);
+		ctx.fill();
+		ctx.closePath();
+	}
+	
+	
+	function getP3Y(x){
+		return Math.floor(p1Y - (p1X - x)*(p1Y - p2Y)/(p1X - p2X)); 
+	}
+	
+	function drawScheme(){
+		var canvas = document.getElementById("canvas1");
+		var ctx = canvas.getContext('2d');		
+		ctx.drawImage(img1,0,0);
+		
+		p3Y = getP3Y(p3X);
+		
+		ctx.lineWidth = 4;
+		ctx.strokeStyle = "red";
+		ctx.beginPath();
+		ctx.moveTo(p1X, p1Y);
+		ctx.lineTo(p2X, p2Y);
+		ctx.moveTo(p3X, p3Y);
+		ctx.lineTo(p4X, p4Y);		
+		ctx.stroke();
+		ctx.closePath();
+
+		drawCircle(p1X, p1Y, p1R, "red", ctx);
+		if (p2MoveMode)
+			drawCircle(p2X, p2Y, p2R, "brown", ctx);			
+		else
+			drawCircle(p2X, p2Y, p2R, "yellow", ctx);
+		if (p3MoveMode)
+			drawCircle(p3X, p3Y, p3R, "brown", ctx);
+		else
+			drawCircle(p3X, p3Y, p3R, "yellow", ctx);
+		if (p4MoveMode)
+			drawCircle(p4X, p4Y, p4R, "brown", ctx);
+		else
+			drawCircle(p4X, p4Y, p4R, "yellow", ctx);
+		
+		
+	}
+		
+	function onCanvasMousedown(e){
+		var br=canvas1.getBoundingClientRect();
+		var mX = Math.floor(e.clientX - br.left);
+		var mY = Math.floor(e.clientY - br.top);
+		mDownX = mX;
+		mDownY = mY;
+
+		if ((mX - p2X)*(mX - p2X) + (mY - p2Y)*(mY - p2Y) <= p2R*p2R)
+		{
+			oldX = p2X;
+			oldY = p2Y;		
+			isDataChanged = p2MoveMode = true;
+			drawScheme();
+			return;
+		}
+		if ((mX - p3X)*(mX - p3X) + (mY - p3Y)*(mY - p3Y) <= p3R*p3R)
+		{
+			oldX = p3X;
+			oldY = p3Y;
+			isDataChanged = p3MoveMode = true;
+			drawScheme();
+			return;
+		}
+
+		if ((mX - p4X)*(mX - p4X) + (mY - p4Y)*(mY - p4Y) <= p4R*p4R)
+		{
+			oldX = p4X;
+			oldY = p4Y;
+			isDataChanged = p4MoveMode = true;
+			drawScheme();
+			return;
+		}		
+		
+	}
+
+	function onCanvasMouseup(e){
+		if (p2MoveMode || p3MoveMode || p4MoveMode)
+		{
+			p2MoveMode = false;
+			p3MoveMode = false;
+			p4MoveMode = false;
+			drawScheme();
+		}
+	}
+
+
+	function onCanvasMouseout(e){
+		if (p2MoveMode || p3MoveMode || p4MoveMode)
+		{
+			p2MoveMode = false;
+			p3MoveMode = false;
+			p4MoveMode = false;
+			drawScheme();
+		}
+	}
+	
+	function onCanvasMousemove(e){
+		if (p2MoveMode)
+		{
+			var br=canvas1.getBoundingClientRect();
+			var mY = Math.floor(e.clientY - br.top);
+			var newY = oldY + (mY - mDownY);
+			if (newY < o1Y)
+				p2Y = o1Y;
+			else
+			if (newY > o1Y + o1R)
+				p2Y = o1Y + o1R;
+			else
+				p2Y = newY;
+			drawScheme();			
+		}
+		if (p3MoveMode)
+		{
+			var br=canvas1.getBoundingClientRect();
+			var mX = Math.floor(e.clientX - br.left);
+			var newX = oldX + (mX - mDownX);
+			if (newX < p1X)
+				p3X = p1X;
+			else
+			if (newX > p2X - p2R - p3R - 1)
+				p3X = p2X - p2R - p3R - 1;
+			else
+				p3X = newX;
+			
+			drawScheme();
+		}
+		if (p4MoveMode)
+		{
+			var br=canvas1.getBoundingClientRect();
+			var mX = Math.floor(e.clientX - br.left);
+			var mY = Math.floor(e.clientY - br.top);
+			var newX = oldX + (mX - mDownX);
+			var newY = oldY + (mY - mDownY);
+			if ((newX - o2X)*(newX - o2X) + (newY - o2Y)*(newY - o2Y) <= o2R*o2R)
+			{
+				p4X = newX;
+				p4Y = newY;
+			}
+			drawScheme();
+		}
+	}	
+	
+
+	</script>
+	<style type="text/css">
+		.divcanvas { 
+			border: solid 2px black; 
+			box-shadow: 0 0 15px rgba(0,0,0,0.5); 
+		}
+		.divcanvasRol { 
+			border: solid 2px black; 
+		}
+		.leftimg {
+			float:left; /* Выравнивание по левому краю */
+			margin: 7px 7px 7px 0; /* Отступы вокруг картинки */			
+		}
+	</style> 
+	</head>
+	<body onload="loader()" bgcolor="#E0E0E0">
+		<img id="img1" src="DesScheme_1.png" style="display: none;" />
+		<h1 align="center">Дезайнограф</h1>
+		<hr />
+		<p>
+					<a href="DesGraphMain.png"><img src="DesGraphMain.png" alt="Дезайнограф" class="centerimg" /></a>
+		</p>
+		<p>		
+			Еще одно устройства для рисования хитрых закорючек называется Дезайнограф. Его конструкция, взятая из того же номера Техники-Молодёжи, приведена на рисунке. 
+			Результат зависит от начального положения планок.
+		</p>
+		<p>
+			Ниже представлена виртуальная модель прибора. Положение планок задается мышкой путем перетаскивания узлов, отмеченных желтыми кружочками. 
+		</p>					
+		<hr />
+		<table>
+			<tr>
+				<td align="center">				  
+					<input id="btnGo" value="Старт" type="button" onclick="onGoClick()">
+					<input id="btnClear" value="Очистить" type="button" onclick="onClearClick()">
+				</td>
+				<td>
+				</td>
+			<tr>
+				<td>
+					<canvas id="canvas" class="divcanvas" width="500"height="500"> </canvas>
+				</td>
+				<td valign="top">					
+					
+					Положение пера в начальный момент
+					<br />
+					<br />
+					<canvas id="canvas1" class="divcanvas" width="400"height="345" onmousedown="onCanvasMousedown(event)" onmouseup="onCanvasMouseup(event)" onmousemove="onCanvasMousemove(event)" onmouseout="onCanvasMouseout(event)"> </canvas>
+					<br />
+					Цвет карандаша: <input id="cmbColor" type="color" name="bg" value="#ff0000">
+				</td>
+			</tr>
+		</table>
+		</br>
+		<a href= "../DrawKaleidoscope/DrawKaleidoscope.html"> Рисовальный калейдоскоп </a>
+		</br>
+		<a href= "../harmonograph/harmonograph.html"> Гармонограф </a>
+	</body>
+</html>
